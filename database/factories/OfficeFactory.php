@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Office;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -24,7 +25,7 @@ class OfficeFactory extends Factory
             'lat' => $this->faker->latitude,
             'lng' => $this->faker->longitude,
             'address_line1' => $this->faker->address,
-            'approval_status' => 2,
+            'approval_status' => Office::APPPROVAL_APPROVED,
             'hidden' => false,
             'price_per_day' => $this->faker->numberBetween(1_00, 2_00),
             'monthly_discount' => 0,
