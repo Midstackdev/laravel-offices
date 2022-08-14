@@ -16,9 +16,9 @@ class OfficeController extends Controller
         $office = Office::query()
             ->where('approval_status', Office::APPPROVAL_APPROVED)
             ->where('hidden', false)
-            ->when(request('host_id'), fn ($builder) => $builder->whereUserId(request('host_id')))
-            ->when(request('user_id'), 
-                fn (Builder $builder) => $builder->whereRelation('reservations', 'user_id', '=', request('user_id'))
+            ->when(request('user_id'), fn ($builder) => $builder->whereUserId(request('user_id')))
+            ->when(request('visitor_id'), 
+                fn (Builder $builder) => $builder->whereRelation('reservations', 'user_id', '=', request('visitor_id'))
             )
             ->when(
                 request('lat') && request('lng'),

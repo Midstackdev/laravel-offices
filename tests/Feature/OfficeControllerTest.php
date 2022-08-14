@@ -46,14 +46,14 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
-    public function itFiltersByHostId()
+    public function itFiltersByUserId()
     {
         Office::factory(3)->create();
 
         $host = User::factory()->create();
         $office = Office::factory()->for($host)->create();
 
-        $response = $this->get('/api/offices?host_id='.$host->id);
+        $response = $this->get('/api/offices?user_id='.$host->id);
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -63,7 +63,7 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
-    public function itFiltersByUserId()
+    public function itFiltersByVisitorId()
     {
         Office::factory(3)->create();
 
@@ -73,7 +73,7 @@ class OfficeControllerTest extends TestCase
         Reservation::factory()->for(Office::factory())->create();
         Reservation::factory()->for($office)->for($user)->create();
 
-        $response = $this->get('/api/offices?user_id='.$user->id);
+        $response = $this->get('/api/offices?visitor_id='.$user->id);
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
