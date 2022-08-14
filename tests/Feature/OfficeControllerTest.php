@@ -209,16 +209,85 @@ class OfficeControllerTest extends TestCase
         ]);
     }
 
+
     /**
      * @test
      */
-    public function itDoesntAllowToCreateIfScopeIsNotProvided()
+    public function itDoesntAllowToCreateOfficeIfScopeIsNotProvided()
     {
         $user = User::factory()->createQuietly();
 
         $token = $user->createToken('test', []);
 
         $response = $this->postJson('/api/offices', [], [
+            'Authorization' => 'Bearer ' .$token->plainTextToken
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * @test
+     */
+    public function itUpdatesAnOffice()
+    {
+        $user = User::factory()->create();
+        $tags = Tag::factory(3)->create();
+        $office = Office::factory()->for($user)->create();
+
+        $office->tags()->attach($tags);
+
+        $this->actingAs($user);
+
+        $anotherTag = Tag::factory()->create();
+
+        $response = $this->putJson('/api/offices/'.$office->id, [
+            'title' => 'Office in Durban with sea view',
+            'tags' => [$tags[0]->id, $anotherTag->id]
+        ]);
+        
+        $response->assertOk()
+            ->assertJsonPath('data.title', 'Office in Durban with sea view')
+            ->assertJsonPath('data.tags.0.id', $tags[0]->id)
+            ->assertJsonPath('data.tags.1.id', $anotherTag->id)
+            ->assertJsonCount(2, 'data.tags');
+            // ->assertJsonPath('data.approval_status', Office::APPPROVAL_PENDING)
+            // ->assertJsonPath('data.user.id', $user->id)
+
+        // $this->assertDatabaseHas('offices', [
+        //     'title' => 'Office in Durban'
+        // ]);
+    }
+
+    /**
+    * @test
+     */
+    public function itDoesntUpdatesAnOfficeThatBelongsToAnotherUser()
+    {
+        $user = User::factory()->create();
+        $anotherUser = User::factory()->create();
+        $office = Office::factory()->for($anotherUser)->create();
+
+        $this->actingAs($user);
+
+        $response = $this->putJson('/api/offices/'.$office->id, [
+            'title' => 'Office in Durban with sea view',
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * @test
+     */
+    public function itDoesntAllowToUpdateOfficeIfScopeIsNotProvided()
+    {
+        $user = User::factory()->createQuietly();
+        $office = Office::factory()->for($user)->create();
+
+        $token = $user->createToken('test', []);
+
+        $response = $this->putJson('/api/offices/'.$office->id, [], [
             'Authorization' => 'Bearer ' .$token->plainTextToken
         ]);
 
