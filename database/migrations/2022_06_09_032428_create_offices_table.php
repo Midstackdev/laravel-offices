@@ -30,7 +30,7 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        Schema::create('office_tags', function (Blueprint $table) {
+        Schema::create('offices_tags', function (Blueprint $table) {
             $table->foreignId('office_id')->index();
             $table->foreignId('tag_id')->index();
 
@@ -46,6 +46,6 @@ return new class extends Migration
     public function down()
     {
         Schema::dropIfExists('offices');
-        Schema::dropIfExists('office_tags');
+        Schema::dropIfExists('offices_tags');
     }
 };
