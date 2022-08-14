@@ -8,6 +8,10 @@ use App\Models\Reservation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 
 class OfficeController extends Controller
 {
@@ -32,10 +36,40 @@ class OfficeController extends Controller
         return OfficeResource::collection($office);
     }
 
-    public function show(Office $office)
+    public function show(Office $office): JsonResource
     {
         $office->loadCount(['reservations' => fn ($builder) => $builder->where('status', Reservation::STATUS_ACTIVE)])
             ->load(['tags', 'images', 'user']);
+        return OfficeResource::make($office);
+    }
+
+    public function create(Request $request): JsonResource
+    {
+        if(! auth()->user()->tokenCan('office.create')) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        $attributes = validator(request()->all(), [
+            'title' => ['required', 'string'],
+            'description' => ['required', 'string'],
+            'lat' => ['required', 'numeric'],
+            'lng' => ['required', 'numeric'],
+            'address_line1' => ['required', 'string'],
+            'hidden' => ['bool'],
+            'price_per_day' => ['required', 'integer', 'min:100'],
+            'monthly_discount' => ['integer', 'min:0'],
+            'tags' => ['array'],
+            'tags.*' => ['integer', Rule::exists('tags', 'id')],
+        ])->validate();
+
+        $attributes['approval_status'] = Office::APPPROVAL_PENDING;
+
+        $office = auth()->user()->offices()->create(
+            Arr::except($attributes, ['tags'])
+        );
+
+        $office->tags()->sync($attributes['tags']);
+
         return OfficeResource::make($office);
     }
 }

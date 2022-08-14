@@ -173,4 +173,55 @@ class OfficeControllerTest extends TestCase
         $this->assertCount(1, $response->json('data')['images']);
         $this->assertEquals($user->id, $response->json('data')['user']['id']);
     }
+
+    /**
+     * @test
+     */
+    public function itCreatesAnOffice()
+    {
+        $user = User::factory()->createQuietly();
+        $tag1 = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+
+        $this->actingAs($user);
+
+        $response = $this->postJson('/api/offices', [
+            'title' => 'Office in Durban',
+            'description' => 'super nice',
+            'lat' => -29.8605202758709,
+            'lng' => 31.024853069755064,
+            'address_line1' => 'downtown miles',
+            'price_per_day' => 10_000,
+            'monthly_discount' => 5,
+            'tags' => [
+                $tag1->id, $tag2->id
+            ],
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.title', 'Office in Durban')
+            ->assertJsonPath('data.approval_status', Office::APPPROVAL_PENDING)
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonCount(2, 'data.tags');
+
+        $this->assertDatabaseHas('offices', [
+            'title' => 'Office in Durban'
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function itDoesntAllowToCreateIfScopeIsNotProvided()
+    {
+        $user = User::factory()->createQuietly();
+
+        $token = $user->createToken('test', []);
+
+        $response = $this->postJson('/api/offices', [], [
+            'Authorization' => 'Bearer ' .$token->plainTextToken
+        ]);
+
+        $response->assertStatus(403);
+    }
 }
