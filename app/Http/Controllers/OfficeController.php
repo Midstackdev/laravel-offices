@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Resources\OfficeResource;
 use App\Models\Office;
 use App\Models\Reservation;
+use App\Models\User;
 use App\Models\Validators\OfficeValidator;
+use App\Notifications\OfficePendingApproval;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -13,7 +15,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Validation\ValidationException;
 
 class OfficeController extends Controller
 {
@@ -70,7 +73,9 @@ class OfficeController extends Controller
             return $office;
         });
 
-        return OfficeResource::make($office);
+        Notification::send(User::firstWhere('name', 'Midstacks'), new OfficePendingApproval($office));
+
+        return OfficeResource::make($office->load(['images', 'tags', 'user']));
     }
 
     public function update(Office $office): JsonResource
@@ -83,18 +88,42 @@ class OfficeController extends Controller
 
         $attributes = (new OfficeValidator())->validate($office, request()->all());
 
-        DB::transaction(function () use ($attributes, $office) {
-            $attributes['approval_status'] = Office::APPPROVAL_PENDING;
+        $office->fill(
+            Arr::except($attributes, ['tags'])
+        );
 
-            $office->update(
-                Arr::except($attributes, ['tags'])
-            );
+        if($requiresReview = $office->isDirty(['lat', 'lng', 'price_per_day'])) {
+            $office->fill(['approval_status' => Office::APPPROVAL_PENDING]);
+        }
+
+        DB::transaction(function () use ($attributes, $office) {
+            $office->save();
 
             if(isset($attributes['tags'])) {
                 $office->tags()->sync($attributes['tags']);
             }
         });
 
-        return OfficeResource::make($office);
+        if($requiresReview) {
+            Notification::send(User::firstWhere('name', 'Midstacks'), new OfficePendingApproval($office));
+        }
+
+        return OfficeResource::make($office->load(['images', 'tags', 'user']));
+    }
+
+    public function delete(Office $office)
+    {
+        abort_unless(auth()->user()->tokenCan('office.delete'), 
+            Response::HTTP_FORBIDDEN
+        );
+
+        $this->authorize('delete', $office);
+
+        throw_if(
+            $office->hasActiveReservation(),
+            ValidationException::withMessages(['office' => 'Cannot delete this office!'])
+        );
+
+        $office->delete();
     }
 }

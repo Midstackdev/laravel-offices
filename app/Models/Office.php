@@ -57,4 +57,9 @@ class Office extends Model
                 [$lat, $lng]
             );
     }
+
+    public function hasActiveReservation()
+    {
+        return $this->reservations()->where('status', Reservation::STATUS_ACTIVE)->exists();
+    }
 }
