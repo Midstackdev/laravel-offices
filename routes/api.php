@@ -12,4 +12,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('/tags', TagController::class);
 Route::controller(OfficeController::class)->group(function() {
     Route::get('/offices', 'index');
+    Route::get('/offices/{office}', 'show');
 });
