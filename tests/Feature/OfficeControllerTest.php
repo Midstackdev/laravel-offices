@@ -182,7 +182,7 @@ class OfficeControllerTest extends TestCase
      */
     public function itCreatesAnOffice()
     {
-        $admin = User::factory()->create(['name' => 'Midstacks']);
+        $admin = User::factory()->create(['is_admin' => true]);
         Notification::fake();
 
         $user = User::factory()->createQuietly();
@@ -284,7 +284,7 @@ class OfficeControllerTest extends TestCase
      */
     public function itMarksTheOfficeAsPendingIfDirty()
     {
-        $admin = User::factory()->create(['name' => 'Midstacks']);
+        $admin = User::factory()->create(['is_admin' => true]);
         Notification::fake();
 
         $user = User::factory()->create();
