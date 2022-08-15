@@ -23,7 +23,7 @@ class Office extends Model
         'lat' => 'decimal:8',
         'lng' => 'decimal:8',
         'approval_status' => 'integer',
-        'hidden' => 'bool',
+        'hidden' => 'boolean',
         'price_per_day' => 'integer',
         'monthly_discount' => 'integer',
     ];

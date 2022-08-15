@@ -49,6 +49,25 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
+    public function itListOfficesWithHiddenAndUnapprovedStatusForCurrentLoggedInUser()
+    {
+        $user = User::factory()->create();
+
+        Office::factory(3)->for($user)->create();
+        Office::factory()->hidden()->for($user)->create();
+        Office::factory()->pending()->for($user)->create();
+
+        $this->actingAs($user);
+
+        $response = $this->get('/api/offices?user_id='.$user->id);
+
+        $response->assertStatus(200);
+        $response->assertJsonCount(5, 'data');
+    }
+
+    /**
+     * @test
+     */
     public function itFiltersByUserId()
     {
         Office::factory(3)->create();
@@ -342,7 +361,7 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
-    public function itCanotDeletesAnOfficeWithActiveReservation()
+    public function itCannotDeleteAnOfficeWithActiveReservation()
     {
         $user = User::factory()->create();
         $office = Office::factory()->for($user)->create();
