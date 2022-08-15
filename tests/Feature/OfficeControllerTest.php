@@ -283,6 +283,50 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
+    public function itUpdatedTheFeaturedImageOfAnOffice()
+    {
+        $user = User::factory()->create();
+        $office = Office::factory()->for($user)->create();
+
+        $image = $office->images()->create([
+            'path' => 'image.jpeg'
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->putJson('/api/offices/'.$office->id, [
+            'featured_image_id' => $image->id,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.featured_image_id', $image->id);
+    }
+
+    /**
+     * @test
+     */
+    public function itDoesntUpdatedTheFeaturedImageThatBelongsToAnotherOffice()
+    {
+        $user = User::factory()->create();
+        $office = Office::factory()->for($user)->create();
+        $office2 = Office::factory()->for($user)->create();
+
+        $image = $office2->images()->create([
+            'path' => 'image.jpeg'
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->putJson('/api/offices/'.$office->id, [
+            'featured_image_id' => $image->id,
+        ]);
+
+        $response->assertUnprocessable()->assertInvalid('featured_image_id');
+    }
+
+    /**
+     * @test
+     */
     public function itDoesntUpdatesAnOfficeThatBelongsToAnotherUser()
     {
         $user = User::factory()->create();

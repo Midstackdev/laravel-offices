@@ -48,6 +48,11 @@ class Office extends Model
         return $this->morphMany(Image::class, 'resource');
     }
 
+    public function featuredImage(): BelongsTo
+    {
+        return $this->belongsTo(Image::class, 'featured_image_id');
+    }
+
     public function scopeNearestTo(Builder $builder, $lat, $lng)
     {
         return $builder
