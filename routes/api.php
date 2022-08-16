@@ -3,6 +3,7 @@
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\OfficeImageController;
 use App\Http\Controllers\TagController;
+use App\Http\Controllers\UserReservationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,5 +22,9 @@ Route::controller(OfficeController::class)->group(function() {
 
 Route::prefix('offices')->middleware(['auth:sanctum', 'verified'])->controller(OfficeImageController::class)->group(function() {
     Route::post('/{office}/images', 'store');
-    Route::delete('/{office}/images/{image}', 'delete');
+    Route::delete('/{office}/images/{image:id}', 'delete');
+});
+
+Route::prefix('reservations')->middleware(['auth:sanctum', 'verified'])->controller(UserReservationController::class)->group(function() {
+    Route::get('/', 'index');
 });
